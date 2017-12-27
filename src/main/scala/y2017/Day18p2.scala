@@ -94,16 +94,16 @@ object Day18p2 extends App {
 
 
   case class Add(x: String, y: Ref) extends Instruction {
-    override def execute(env: Env, state: State) = (env, state.updateValue(x, state.getValue(x) + state.getValue(y)).next())
+    override def execute(env: Env, state: State) = (env, state.updateValue(x, state.getValue(Register(x)) + state.getValue(y)).next())
   }
 
   case class Mul(x: String, y: Ref) extends Instruction {
-    override def execute(env: Env, state: State) = (env, state.updateValue(x, state.getValue(x) * state.getValue(y)).next())
+    override def execute(env: Env, state: State) = (env, state.updateValue(x, state.getValue(Register(x)) * state.getValue(y)).next())
   }
 
   case class Mod(x: String, y: Ref) extends Instruction {
     override def execute(env: Env, state: State) =
-      (env, state.updateValue(x, state.getValue(x) % state.getValue(y)).next())
+      (env, state.updateValue(x, state.getValue(Register(x)) % state.getValue(y)).next())
 
   }
 

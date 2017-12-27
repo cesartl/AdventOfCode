@@ -1,15 +1,15 @@
 import scala.annotation.tailrec
 
-type Row[A] = List[A]
+type Row[A] = Vector[A]
 
-type Matrix[A] = List[Row[A]]
+type Matrix[A] = Vector[Row[A]]
 
 def flipH[A](m: Matrix[A]): Matrix[A] = m.map(r => r.reverse)
 
 def flipV[A](m: Matrix[A]): Matrix[A] = m.transpose.map(c => c.reverse).transpose
 
-val m1: Matrix[Char] = List(List('.', '#', '.'), List('.', '.', '#'), List('#', '#', '#'))
-val m2: Matrix[Char] = List(List('#', '#', '.', '#', '#', '.'), List('.', '.', '#', '.', '.', '#'), List('#', '#', '#', '#', '#', '#'), List('#', '#', '.', '#', '#', '.'), List('.', '.', '#', '.', '.', '#'), List('#', '#', '#', '#', '#', '#'))
+val m1: Matrix[Char] = Vector(Vector('.', '#', '.'), Vector('.', '.', '#'), Vector('#', '#', '#'))
+val m2: Matrix[Char] = Vector(Vector('#', '#', '.', '#', '#', '.'), Vector('.', '.', '#', '.', '.', '#'), Vector('#', '#', '#', '#', '#', '#'), Vector('#', '#', '.', '#', '#', '.'), Vector('.', '.', '#', '.', '.', '#'), Vector('#', '#', '#', '#', '#', '#'))
 
 
 case class RichMatrix[A](m: Matrix[A]) {
@@ -25,12 +25,12 @@ case class RichMatrix[A](m: Matrix[A]) {
 
   def rotate[A] = m.transpose
 
-  def split(n: Int): Seq[Matrix[A]] = m.grouped(n).toList.flatMap(g => g.transpose.grouped(n).map(_.transpose).toList)
+  def split(n: Int): Seq[Matrix[A]] = m.grouped(n).toVector.flatMap(g => g.transpose.grouped(n).map(_.transpose).toVector)
 
   def combine(m2: Matrix[A]): Matrix[A] = {
     if (m.size != m2.size) throw new IllegalArgumentException("Cannot combine " + m + " and  " + m2)
     else {
-      m.zipWithIndex.map(p => p._1 ::: m2(p._2))
+      m.zipWithIndex.map(p => p._1 ++ m2(p._2))
     }
   }
 
@@ -41,31 +41,53 @@ case class RichMatrix[A](m: Matrix[A]) {
 implicit def pimp[A](m: Matrix[A]) = new RichMatrix(m)
 
 def combineBy[A](matrices: Seq[Matrix[A]], by: Int): Matrix[A] = {
-  matrices.grouped(by).map(g => g.reduce((x, y) => x.combine(y))).toList.flatten
+  matrices.grouped(by).map(g => g.reduce((x, y) => x.combine(y))).toVector.flatten
 }
 
-def allCombination[A](m: Matrix[A]): Seq[Matrix[A]] = List(
-  m, m.flip1, m.flip2, m.flip1.flip2, m.transpose, m.transpose.flip1, m.transpose.flip2, m.transpose.flip1.flip2, m.transpose.flip2.flip1, m.flip1.transpose, m.flip2.transpose
+def allCombination[A](m: Matrix[A]): Seq[Matrix[A]] = Vector(
+  m, m.flip1, m.flip2,
+  m.flip1.flip2,
+  m.flip1.flip2.transpose,
+  m.transpose, m.transpose.flip1, m.transpose.flip2,
+  m.transpose.flip1.flip2,
+  m.transpose.flip2.flip1.transpose,
+  m.flip1.transpose,
+  m.flip1.transpose.flip1,
+  m.flip1.transpose.flip2,
+  m.flip1.transpose.flip1.flip2,
+  m.flip2.transpose,
+  m.flip2.transpose.flip1,
+  m.flip2.transpose.flip2,
+  m.flip2.transpose.flip1.flip2,
+  m.flip1.transpose.flip1.transpose,
+  m.flip1.transpose.flip2.transpose,
+  m.flip1.transpose.flip1.flip2.transpose,
+  m.flip2.transpose.flip1.transpose,
+  m.flip2.transpose.flip2.transpose,
+  m.flip2.transpose.flip1.flip2.transpose,
+  m.flip1.flip2.transpose.flip1,
+  m.flip1.flip2.transpose.flip2,
+  m.flip1.flip2.transpose.flip1.flip2
 )
 
 //allCombination(m1).foreach(m => println(m.toStr))
 
 type Picture = Matrix[Char]
 
-case class Rule(pattern: Picture, output: Picture) {
-  override def toString = pattern.toString() + " => " + output.toString()
+case class Rule(patterns: Seq[Picture], output: Picture) {
+  override def toString = output.toString()
 }
 
 def parseRule(s: String): Rule = {
   val split = s.split("=>").map(_.trim).map(parse)
-  Rule(split(0), split(1))
+  Rule(allCombination(split(0)), split(1))
 }
 
 
-def parse(s: String): Picture = s.split("/").toList.map(r => r.toCharArray.toList)
+def parse(s: String): Picture = s.split("/").toVector.map(r => r.toCharArray.toVector)
 
 def applyFirstMatch(picture: Picture, rules: Seq[Rule]): Picture = {
-  val o = rules.find(r => allCombination(r.pattern).contains(picture)).map(_.output)
+  val o = rules.find(r => r.patterns.contains(picture)).map(_.output)
   if (o.isEmpty) {
     throw new IllegalArgumentException("no match for " + picture)
   } else {
@@ -78,14 +100,16 @@ case class State(p: Picture, rules: Seq[Rule]) {
   def next(): State = {
     if (p.size % 2 == 0) {
       println("split by 2")
-      val x = p.size / 2
-      val split = p.split(2).map(m => applyFirstMatch(m, rules))
-      State(combineBy(split, 2), rules)
+      val tmp = p.split(2)
+//      tmp.foreach(x => println(x.toStr))
+      val split = tmp.map(m => applyFirstMatch(m, rules))
+      State(combineBy(split, p.size / 2), rules)
     } else if (p.size % 3 == 0) {
       println("split by 3")
-      val x = p.size / 3
-      val split = p.split(3).map(m => applyFirstMatch(m, rules))
-      State(combineBy(split, 3), rules)
+      val tmp = p.split(3)
+//      tmp.foreach(x => println(x.toStr))
+      val split = tmp.map(m => applyFirstMatch(m, rules))
+      State(combineBy(split, p.size / 3), rules)
     } else {
       throw new IllegalArgumentException("size " + p.size)
     }
@@ -97,7 +121,6 @@ val test = "../.# => ##./#../...\n.#./..#/### => #..#/..../..../#..#"
 
 val rules = test.split("\n").map(parseRule)
 
-rules.map(r => r.pattern == m1)
 
 m1.split(3)
 
@@ -111,16 +134,22 @@ val cesar = "../.. => .../.../..#\n#./.. => #.#/..#/...\n##/.. => #.#/..#/#.#\n.
 val cesarRules = cesar.split("\n").map(parseRule)
 
 
+def toHash(p: Picture) = p.map(s => s.mkString("")).mkString("/").hashCode()
+
 @tailrec
-def solve(state: State, n: Int) : State = if(n == 0) state else solve(state.next(), n -1)
+def solve(state: State, n: Int) : State = {
+//  println(toHash(state.p))
+//  println(state.p.toStr)
+  if (n == 0) state else solve(state.next(), n - 1)
+}
 
-val s =solve(State(m1, cesarRules), 18)
-//s.p.toStr
-s.p.count('#')
+val s =solve(State(m1, cesarRules), 18).p.count('#')
+////s.p.toStr
+//s.p.count('#')
+//2265464
+//2265464
 
-
-
-
+//toHash(m1)
 
 
 
