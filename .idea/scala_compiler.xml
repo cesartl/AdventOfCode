@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="SBT 1" modules="adventofcode">
+    <profile name="SBT 1" modules="">
       <option name="compileOrder" value="ScalaThenJava" />
       <option name="implicitConversions" value="true" />
     </profile>
+    <profile name="sbt 1" modules="adventofcode" />
   </component>
 </project>
