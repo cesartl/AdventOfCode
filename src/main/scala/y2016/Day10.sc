@@ -90,5 +90,5 @@ val cesar = "bot 49 gives low to bot 118 and high to bot 182\nbot 192 gives low 
 
 val solved = solve1(cesar)
 solved._2.filter(c => c.values == Set(61, 17))
-solved._1.outputs.toSeq.filter{case (name, _) => Set(0, 1, 2).contains(name)}.flatMap{case (name, queue) => queue}.foldLeft(1)(_ * _)
+solved._1.outputs.toSeq.filter { case (name, _) => Set(0, 1, 2).contains(name) }.flatMap { case (_, queue) => queue }.product
 
