@@ -20,6 +20,8 @@ s2(2)
 s2(3)
 
 
+val x : Option[Int] = None
+
 
 
 
