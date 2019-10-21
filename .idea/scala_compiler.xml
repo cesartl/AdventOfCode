@@ -5,6 +5,6 @@
       <option name="compileOrder" value="ScalaThenJava" />
       <option name="implicitConversions" value="true" />
     </profile>
-    <profile name="sbt 1" modules="adventofcode" />
+    <profile name="sbt 1" modules="adventofcode,AdventOfCode" />
   </component>
 </project>
